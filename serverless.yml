@@ -1,0 +1,48 @@
+
+service: servlessgo-products
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: go1.x
+  stage: dev
+  region: us-east-2
+  iam:
+    role: 
+      statements:
+        - Effect: Allow
+          Action: 
+            - dynamodb:PutItem
+          Resource:
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/products"
+
+package:
+  patterns:
+    - '!./**'
+    - ./bin/**
+
+functions:
+  insert:
+    handler: bin/insertproduct
+    events:
+      - httpApi:
+          path: /products
+          method: post
+  
+
+resources:
+  Resources:
+    products:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: products
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
